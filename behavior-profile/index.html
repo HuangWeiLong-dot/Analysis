@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>行为档案 · 人格与行为模式分析</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <h1>行为档案</h1>
+      <p>Personality & behavior profiling</p>
+    </div>
+
+    <div class="profile-switch">
+      <label>当前档案</label>
+      <div class="profile-row">
+        <select id="profileSelect"></select>
+        <button class="btn tiny" id="btnNewProfile" title="新建档案">＋</button>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <div class="nav-group">工作台</div>
+      <button data-section="overview" class="active"><span class="ico">◧</span> 档案总览</button>
+      <button data-section="entry"><span class="ico">✎</span> 数据录入</button>
+      <div class="nav-group">分析</div>
+      <button data-section="traits"><span class="ico">◇</span> 人格画像</button>
+      <button data-section="patterns"><span class="ico">⌁</span> 行为模式</button>
+      <button data-section="predict"><span class="ico">⇢</span> 行为预测</button>
+      <div class="nav-group">输出</div>
+      <button data-section="report"><span class="ico">▤</span> 档案报告</button>
+      <button data-section="about"><span class="ico">ⓘ</span> 方法与说明</button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div><span class="dot"></span>本地运行 · 数据不上传</div>
+      <div style="margin-top:4px">启发式分析 · 非临床诊断</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h2 id="pageTitle">档案总览</h2>
+        <div class="sub" id="pageSub">当前档案：—</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn" id="btnDemo">载入示例</button>
+        <button class="btn" id="btnExport">导出 JSON</button>
+        <button class="btn" id="btnImport">导入 JSON</button>
+        <button class="btn danger" id="btnDeleteProfile">删除档案</button>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- ============ OVERVIEW ============ -->
+      <section class="section active" id="sec-overview">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h3>档案信息</h3>
+              <p class="hint">基础信息只用于标注档案，不参与推断。</p>
+            </div>
+          </div>
+          <div class="grid grid-3">
+            <label class="field"><span>档案名称</span><input type="text" id="metaName"></label>
+            <label class="field"><span>角色 / 语境</span><input type="text" id="metaRole" placeholder="如：同事、团队成员、朋友"></label>
+            <label class="field"><span>观察关系</span><input type="text" id="metaRelation" placeholder="如：共事 6 个月"></label>
+          </div>
+          <label class="field"><span>备注</span><textarea id="metaNotes" placeholder="记录你观察到的背景信息、数据边界、你的假设等"></textarea></label>
+          <div class="row-actions"><button class="btn primary" id="btnSaveMeta">保存信息</button></div>
+        </div>
+
+        <div class="card">
+          <h3>数据覆盖</h3>
+          <p class="hint">数据量直接决定推断的可靠程度。空缺的维度不会被凭空填补。</p>
+          <div class="stat-row" id="coverageStats"></div>
+        </div>
+
+        <div class="card">
+          <h3>数据质量检查</h3>
+          <p class="hint">检测直线作答、正反向题矛盾、证据之间的冲突。问题会被显式标注，而不是悄悄影响分数。</p>
+          <div id="qualityBox"></div>
+        </div>
+
+        <div class="card">
+          <h3>快速解读</h3>
+          <div id="overviewSummary"></div>
+        </div>
+
+        <div class="notice warn">
+          使用边界：本工具依据你输入的观察与文本做启发式归纳，结论是<strong>待验证的假设</strong>，不是心理诊断，也不应用于操控、歧视或替他人做重大决定。对他人画像前应尽可能告知并获得同意。
+        </div>
+      </section>
+
+      <!-- ============ ENTRY ============ -->
+      <section class="section" id="sec-entry">
+        <div class="card">
+          <div class="tabs" id="entryTabs">
+            <button class="active" data-sub="obs">情境—行为观察</button>
+            <button data-sub="text">文本样本</button>
+            <button data-sub="scale">量表作答</button>
+            <button data-sub="rhythm">日常节律</button>
+          </div>
+
+          <!-- observations -->
+          <div class="subview active" id="sub-obs">
+            <p class="hint">一条观察 = 在什么情境下、做了什么、你如何解读。尽可能写事实，少写评判。</p>
+            <div class="grid grid-2">
+              <label class="field"><span>日期</span><input type="date" id="obsDate"></label>
+              <label class="field"><span>情境 / 触发因素</span><input type="text" id="obsSituation" placeholder="如：项目临近截止、被当众质疑"></label>
+            </div>
+            <label class="field"><span>观察到的行为（事实描述）</span><textarea id="obsBehavior" placeholder="如：把任务拆成清单，逐个核对后才提交"></textarea></label>
+            <label class="field"><span>你的解读 / 结果</span><textarea id="obsInterpret" placeholder="如：在不确定时倾向于用流程降低风险"></textarea></label>
+            <label class="field"><span>行为类别标签（用于模式统计）</span>
+              <div class="checkline" id="obsBehaviorTags"></div>
+            </label>
+            <label class="field"><span>情境类别标签</span>
+              <div class="checkline" id="obsContextTags"></div>
+            </label>
+            <div class="grid grid-2">
+              <label class="field"><span>情绪强度（1 低 — 5 高）</span><input type="number" id="obsIntensity" min="1" max="5" value="3"></label>
+              <label class="field"><span>结果倾向</span>
+                <select id="obsOutcome">
+                  <option value="neutral">中性 / 未观察</option>
+                  <option value="positive">偏正向</option>
+                  <option value="negative">偏负向</option>
+                </select>
+              </label>
+            </div>
+            <button class="btn primary" id="btnAddObs">添加观察</button>
+            <div style="height:18px"></div>
+            <div id="obsList"></div>
+          </div>
+
+          <!-- text -->
+          <div class="subview" id="sub-text">
+            <p class="hint">粘贴其本人书写的文字（聊天、邮件、公开表达）。系统会提取用词与句式信号，不做语义真值判断。</p>
+            <label class="field"><span>来源标注</span><input type="text" id="textSource" placeholder="如：工作群消息 / 朋友圈 / 自述"></label>
+            <label class="field"><span>文本内容</span><textarea id="textBody" style="min-height:150px" placeholder="粘贴文本…"></textarea></label>
+            <button class="btn primary" id="btnAddText">分析并保存</button>
+            <div style="height:18px"></div>
+            <div id="textList"></div>
+          </div>
+
+          <!-- scale -->
+          <div class="subview" id="sub-scale">
+            <p class="hint">简版 IPIP-NEO / HEXACO 取向的自评或他评量表（36 题）。1 = 非常不同意，5 = 非常同意。未作答的题目不会计入。</p>
+            <div id="scaleContainer"></div>
+            <div style="margin-top:16px"><button class="btn primary" id="btnSaveScale">保存量表</button>
+            <button class="btn" id="btnClearScale">清空量表</button></div>
+          </div>
+
+          <!-- rhythm -->
+          <div class="subview" id="sub-rhythm">
+            <p class="hint">数字表型取向：记录可观察的日常节律，用于区分「长期特质」与「近期状态」。</p>
+            <div class="grid grid-4">
+              <label class="field"><span>日期</span><input type="date" id="rhDate"></label>
+              <label class="field"><span>睡眠时长（小时）</span><input type="number" id="rhSleep" step="0.5" min="0" max="24"></label>
+              <label class="field"><span>社交时长（小时）</span><input type="number" id="rhSocial" step="0.5" min="0" max="24"></label>
+              <label class="field"><span>专注时长（小时）</span><input type="number" id="rhFocus" step="0.5" min="0" max="24"></label>
+            </div>
+            <div class="grid grid-3">
+              <label class="field"><span>情绪状态（1 低 — 5 高）</span><input type="number" id="rhMood" min="1" max="5" value="3"></label>
+              <label class="field"><span>压力水平（1 低 — 5 高）</span><input type="number" id="rhStress" min="1" max="5" value="3"></label>
+              <label class="field"><span>备注</span><input type="text" id="rhNote"></label>
+            </div>
+            <button class="btn primary" id="btnAddRhythm">添加记录</button>
+            <div style="height:18px"></div>
+            <div id="rhythmList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ TRAITS ============ -->
+      <section class="section" id="sec-traits">
+        <div class="card">
+          <div class="card-head">
+            <div><h3>大五 + 诚实谦逊画像</h3><p class="hint">分数 0–100，50 为中性参考线；每条证据的权重与置信度见下方。</p></div>
+          </div>
+          <div class="grid grid-2">
+            <div class="radar-wrap" id="radar"></div>
+            <div id="traitBars"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>证据来源分解</h3>
+          <p class="hint">显示每一类数据对当前分数的贡献，以及样本量。</p>
+          <div id="traitEvidence"></div>
+        </div>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>推导视图：MBTI 倾向</h3>
+            <p class="hint">由大五分数粗略映射，仅作沟通速记，信效度有限。</p>
+            <div id="mbtiView"></div>
+          </div>
+          <div class="card">
+            <h3>推导视图：DISC 行为风格</h3>
+            <p class="hint">由外向性、尽责性、宜人性组合推导，描述做事风格。</p>
+            <div id="discView"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>关系与认知模式（图式 / 依恋取向）</h3>
+          <p class="hint">基于你在观察解读中反复出现的主题词归纳，不是量表诊断。</p>
+          <div id="schemaView"></div>
+        </div>
+      </section>
+
+      <!-- ============ PATTERNS ============ -->
+      <section class="section" id="sec-patterns">
+        <div class="card">
+          <h3>情境 → 行为 共现模式</h3>
+          <p class="hint">从观察记录中挖掘重复出现的组合。支持度 = 出现次数；置信度 = 该情境下此行为占比。支持度为 1 的条目只是单次观察，不能当作稳定模式。</p>
+          <div id="patternTable"></div>
+        </div>
+        <div class="card">
+          <h3>反复出现的主题</h3>
+          <p class="hint">从情境描述与行为描述的文本中统计高频主题词。</p>
+          <div id="themeTable"></div>
+        </div>
+        <div class="card">
+          <h3>状态 vs 特质</h3>
+          <p class="hint">对比早期与近期节律，判断变化更像长期模式还是短期状态。</p>
+          <div id="stateTrait"></div>
+        </div>
+      </section>
+
+      <!-- ============ PREDICT ============ -->
+      <section class="section" id="sec-predict">
+        <div class="card">
+          <h3>行为倾向模拟器</h3>
+          <p class="hint">输入一个假设情境，系统会结合历史共现模式、人格先验与当前状态，给出行为倾向的概率区间。</p>
+          <label class="field"><span>情境描述</span><input type="text" id="predSituation" placeholder="如：被当众质疑方案，时间很紧"></label>
+          <label class="field"><span>情境类别（可多选）</span><div class="checkline" id="predContextTags"></div></label>
+          <button class="btn primary" id="btnPredict">生成倾向估计</button>
+        </div>
+        <div class="card" id="predResultCard" style="display:none">
+          <h3>倾向估计</h3>
+          <p class="hint">概率为区间估计，条形长度对应中位数。样本越少，区间越宽。</p>
+          <div id="predResult"></div>
+          <div id="predWhy"></div>
+        </div>
+        <div class="notice warn">
+          这是基于已有数据的条件概率估计，不是对某个人的确定性预测。人的单次行为受情境、当下的身体与情绪状态、对方反应等大量未知变量影响；请把它当作「提问的起点」，而不是结论。
+        </div>
+      </section>
+
+      <!-- ============ REPORT ============ -->
+      <section class="section" id="sec-report">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h3>行为档案报告</h3>
+              <p class="hint">由当前全部数据实时生成，可直接复制或下载为 Markdown。</p>
+            </div>
+            <div class="row-actions">
+              <button class="btn" id="btnCopyReport">复制</button>
+              <button class="btn primary" id="btnDownloadReport">下载 .md</button>
+              <button class="btn" id="btnPrint">打印</button>
+            </div>
+          </div>
+          <pre class="report" id="reportOut"></pre>
+        </div>
+      </section>
+
+      <!-- ============ ABOUT ============ -->
+      <section class="section" id="sec-about">
+        <div class="card">
+          <h3>方法与来源</h3>
+          <p class="hint">本工具把以下几类公开方法整合为一条可离线运行的分析链。</p>
+          <div id="aboutContent"></div>
+        </div>
+        <div class="card">
+          <h3>伦理与使用约定</h3>
+          <div class="notice warn" id="ethicsBox"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="fileInput" accept="application/json" class="hidden">
+<script src="app.js"></script>
+</body>
+</html>
